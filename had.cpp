@@ -1,7 +1,7 @@
 /*====================================
 *	File name	  : win.cpp
 *	Create Date	  : 09-09-2020
-*	Last Modified : Tue 22 Sep 2020 09:20:01 PM CEST
+*	Last Modified : Tue 06 Oct 2020 07:35:23 AM CEST
 *	Comment		  :
 *	Created 	  : 
 *=====================================*/
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 	curs_set(0);
 	Settings cfg(argv);
 	
-	int ch = 0, che = 0;
+	int ch = 0, che = 0, cntms = 0, kpresslim = 10;
 	wa = newwin(cfg.h, cfg.w, cfg.ybeg, cfg.xbeg);
 	wm = newwin(cfg.h - 2, cfg.w - 2, cfg.ybeg + 1, cfg.xbeg + 1);
 	dbg = newwin(5, cfg.w, cfg.ybeg, cfg.xbeg + cfg.w + 2);
@@ -158,8 +158,8 @@ int main(int argc, char **argv) {
 				break;
 		}
 		update_speed();
-		while ((che = wgetch(wm)) != ERR);
-		napms(100);
+		//while ((che = wgetch(wm)) != ERR)
+                napms(100);
 		while(!quit) {
 			ch = wgetch(wm);
 			prev = op;
@@ -227,30 +227,34 @@ int main(int argc, char **argv) {
 			}
 			if (stop)
 				continue;
-			bool r = (*op)(cfg.mvx, cfg.mvy, cfg.rx, cfg.ry, cfg.w - 3, cfg.h - 3, stop, cfg.length, (void *)prev);
-			while ((che = wgetch(wm)) != ERR);
-			if (stop) {
-				crash_msg("Naboural si do steny!");
-			}
-			if (r) {
-				cfg.length++;
-				wrefresh(dbg);
-			}
-			else
-				mvwaddch(wm, cfg.ry, cfg.rx, ' ');
-			if (mvwinch(wm, cfg.mvy, cfg.mvx) == BODY) {
-				stop = true;
-				crash_msg("Pokusil ses snist sam sebe!");
-				continue;
-			}
-			mvwaddch(wm, cfg.mvy, cfg.mvx, BODY);
-			mvwaddstr(dbg, 1, 4, std::to_string(cfg.mvx).c_str());
-			mvwaddstr(dbg, 2, 4, std::to_string(cfg.mvy).c_str());
-			mvwaddstr(dbg, 1, 14, std::to_string(cfg.rx).c_str());
-			mvwaddstr(dbg, 2, 14, std::to_string(cfg.ry).c_str());
-			wrefresh(wm);
-			wrefresh(dbg);
-			napms(mslim);
+                        if (mslim == cntms || prev != op) {
+                            bool r = (*op)(cfg.mvx, cfg.mvy, cfg.rx, cfg.ry, cfg.w - 3, cfg.h - 3, stop, cfg.length, (void *)prev);
+                            while ((che = wgetch(wm)) != ERR);
+                            if (stop) {
+                                    crash_msg("Naboural si do steny!");
+                            }
+                            if (r) {
+                                    cfg.length++;
+                                    wrefresh(dbg);
+                            }
+                            else
+                                    mvwaddch(wm, cfg.ry, cfg.rx, ' ');
+                            if (mvwinch(wm, cfg.mvy, cfg.mvx) == BODY) {
+                                    stop = true;
+                                    crash_msg("Pokusil ses snist sam sebe!");
+                                    continue;
+                            }
+                            mvwaddch(wm, cfg.mvy, cfg.mvx, BODY);
+                            mvwaddstr(dbg, 1, 4, std::to_string(cfg.mvx).c_str());
+                            mvwaddstr(dbg, 2, 4, std::to_string(cfg.mvy).c_str());
+                            mvwaddstr(dbg, 1, 14, std::to_string(cfg.rx).c_str());
+                            mvwaddstr(dbg, 2, 14, std::to_string(cfg.ry).c_str());
+                            wrefresh(wm);
+                            wrefresh(dbg);
+                            cntms = 0;
+                        }
+                        cntms += kpresslim;
+                        napms(kpresslim);
 		}
 	}
 	endwin();
